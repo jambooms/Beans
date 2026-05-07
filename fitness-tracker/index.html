@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitness Tracker · Beans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #080f1a;
+    --surface:   #0d1829;
+    --surface2:  #112035;
+    --border:    #1a2e45;
+    --accent:    #2dd4a0;
+    --accent-dim:#1a7e62;
+    --accent-glow: rgba(45,212,160,0.12);
+    --accent2:   #ff6b35;
+    --accent3:   #5bc4f5;
+    --green:     #2dd4a0;
+    --orange:    #ff6b35;
+    --text:      #e8f0f8;
+    --muted:     #4a6a85;
+    --muted2:    #7a99b8;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding-bottom: 80px;
+    overflow-x: hidden;
+  }
+
+  /* Ambient glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    height: 50vh;
+    background: radial-gradient(ellipse at center, rgba(45,212,160,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Back nav ─── */
+  .back-nav {
+    position: relative;
+    z-index: 10;
+    padding: 16px 28px;
+    border-bottom: 1px solid rgba(45,212,160,0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .back-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--muted2);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .back-link:hover { color: var(--accent); }
+  .back-sep { color: var(--muted); font-size: 11px; }
+  .back-current {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  /* HEADER */
+  .header {
+    position: relative;
+    z-index: 1;
+    border-bottom: 1px solid rgba(45,212,160,0.12);
+    padding: 32px 28px 24px;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+    opacity: 0.7;
+  }
+  .header-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-family: var(--font-head);
+    font-size: clamp(38px, 9vw, 66px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 0.9;
+    color: var(--text);
+  }
+  .header h1 span { color: var(--accent); }
+  .header-meta {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .meta-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    letter-spacing: 0.08em;
+    border-radius: 4px;
+  }
+  .meta-chip strong { color: var(--accent); }
+
+  /* PRINCIPLES SECTION */
+  .principles {
+    position: relative; z-index: 1;
+    margin: 24px 28px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .principles-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+  }
+  .principles.closed .principles-header { border-radius: 8px; border-bottom: none; }
+  .principles-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .principles-arrow {
+    font-family: var(--font-head);
+    color: var(--muted);
+    font-size: 14px;
+    transition: transform 0.2s;
+  }
+  .principles.open .principles-arrow { transform: rotate(180deg); }
+  .principles-body { display: none; padding: 18px; }
+  .principles.open .principles-body { display: block; }
+
+  .principle {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .principle:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .principle-title {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .principle-num {
+    font-family: var(--font-head);
+    font-size: 11px;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    padding: 1px 5px;
+    letter-spacing: 0.1em;
+    border-radius: 3px;
+  }
+  .principle-body { font-size: 12px; color: var(--muted2); line-height: 1.65; font-weight: 300; }
+  .principle-body strong { color: var(--text); font-weight: 500; }
+  .principle-body .hl { color: var(--accent); }
+  .principle-body .warn { color: var(--accent2); }
+  .principle-body .num { font-family: var(--font-mono); color: var(--text); font-weight: 500; }
+
+  /* WEEK GRID */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin: 20px 28px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .week-day {
+    background: var(--surface);
+    padding: 10px 4px;
+    text-align: center;
+    min-height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .week-day.rest { background: rgba(8,15,26,0.8); }
+  .week-day-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .week-day-name {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--text);
+    line-height: 1.05;
+  }
+  .week-day-name.chest    { color: var(--accent); }
+  .week-day-name.back     { color: var(--accent3); }
+  .week-day-name.legs     { color: #7eda5a; }
+  .week-day-name.shoulders{ color: var(--orange); }
+  .week-day-name.arms     { color: var(--accent2); }
+  .week-day-name.rest     { color: var(--muted); }
+
+  /* TAB BAR */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    margin: 24px 28px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: relative; z-index: 1;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--muted2);
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    white-space: nowrap;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    border-top: none; border-bottom: none; border-left: none;
+  }
+  .tab:last-child { border-right: none; }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active { color: var(--bg); background: var(--accent); }
+
+  /* DAY PANELS */
+  .day-panel { display: none; position: relative; z-index: 1; }
+  .day-panel.active { display: block; }
+
+  /* DAY HEADER */
+  .day-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .day-title {
+    font-family: var(--font-head);
+    font-size: clamp(32px, 7vw, 52px);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .day-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* FOCUS BOX */
+  .day-focus {
+    margin: 16px 28px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    border-radius: 0 6px 6px 0;
+  }
+  .day-focus-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .day-focus-body { font-size: 12px; color: var(--muted2); line-height: 1.65; font-weight: 300; }
+  .day-focus-body strong { color: var(--text); font-weight: 500; }
+  .day-focus-body .hl { color: var(--accent); }
+
+  /* AB TOGGLE */
+  .ab-toggle {
+    display: flex;
+    margin: 20px 28px 0;
+    width: fit-content;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .ab-btn {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 8px 24px;
+    cursor: pointer;
+    color: var(--muted2);
+    background: var(--surface);
+    border: none;
+    border-right: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .ab-btn:last-child { border-right: none; }
+  .ab-btn.active { background: var(--accent); color: var(--bg); }
+  .ab-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin: 8px 28px 0;
+    letter-spacing: 0.1em;
+  }
+  .ab-label span { color: var(--accent); }
+
+  /* EXERCISES */
+  .exercises { padding: 16px 28px 0; }
+  .ex-group-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 20px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ex-group-label:first-child { margin-top: 4px; }
+
+  .exercise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    margin-bottom: 10px;
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+    transition: border-color 0.2s;
+  }
+  .exercise-card.p1 { border-left-color: var(--accent); }
+  .exercise-card.p2 { border-left-color: var(--accent2); }
+  .exercise-card.p3 { border-left-color: var(--muted); }
+
+  .ex-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ex-name { font-weight: 500; font-size: 14px; color: var(--text); line-height: 1.25; }
+  .ex-sets {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ex-sets .load {
+    font-size: 11px;
+    color: var(--muted2);
+    font-family: var(--font-mono);
+    margin-left: 5px;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .ex-tags { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    letter-spacing: 0.05em;
+    border-radius: 3px;
+  }
+  .tag.y { color: var(--accent);  border-color: var(--accent-dim); background: rgba(45,212,160,0.06); }
+  .tag.r { color: var(--accent2); border-color: #3a1800; background: rgba(255,107,53,0.06); }
+  .tag.b { color: var(--accent3); border-color: #003a4a; background: rgba(91,196,245,0.06); }
+
+  /* ANNOTATIONS */
+  .annotations {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 10px;
+  }
+  .ann { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+  .ann-icon {
+    font-family: var(--font-head);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 4px;
+    text-align: center;
+    color: var(--bg);
+    line-height: 1.4;
+    border-radius: 3px;
+    grid-row: 1 / span 2;
+  }
+  .ann-icon.focus { background: var(--accent); }
+  .ann-icon.form  { background: var(--accent3); color: var(--bg); }
+  .ann-icon.prog  { background: #7eda5a; color: var(--bg); }
+  .ann-icon.stop  { background: var(--accent2); color: #fff; }
+  .ann-icon.rest  { background: var(--muted); color: var(--bg); }
+  .ann-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .ann-body { font-size: 12px; color: var(--muted2); line-height: 1.6; font-weight: 300; }
+  .ann-body strong { color: var(--text); font-weight: 500; }
+  .ann-body .hl   { color: var(--accent); font-weight: 500; }
+  .ann-body .warn { color: var(--accent2); font-weight: 500; }
+  .ann-body .num  { font-family: var(--font-mono); color: var(--text); font-weight: 500; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 28px 28px 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 1;
+  }
+
+  /* REST CALC */
+  .rest-calc {
+    margin: 0 28px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    border-radius: 8px;
+    position: relative; z-index: 1;
+  }
+  .rest-calc-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    gap: 12px;
+  }
+  .rest-calc-row:last-child { border-bottom: none; }
+  .rest-calc-type { font-size: 12px; color: var(--text); font-weight: 500; }
+  .rest-calc-detail { font-size: 11px; color: var(--muted2); margin-top: 2px; font-weight: 300; line-height: 1.5; }
+  .rest-calc-time {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* WARNING */
+  .warning-box {
+    margin: 16px 28px 0;
+    background: rgba(255,107,53,0.05);
+    border: 1px solid rgba(255,107,53,0.25);
+    border-left: 3px solid var(--accent2);
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #cc7755;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    border-radius: 0 6px 6px 0;
+  }
+  .warning-box strong { color: var(--accent2); }
+
+  /* EDIT MODE */
+  .edit-toggle-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .edit-toggle-btn {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--muted2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .edit-toggle-btn:hover { color: var(--text); }
+  .edit-toggle-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .edit-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    flex: 1;
+    text-align: center;
+  }
+  .edit-status.saved { color: var(--accent); }
+  .edit-actions { display: flex; gap: 8px; }
+  .reset-btn {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--muted2);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { color: var(--accent2); border-color: var(--accent2); }
+
+  .load-edit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted2);
+    letter-spacing: 0;
+    margin-left: 5px;
+    background: transparent;
+    border: none;
+    text-align: right;
+    width: auto;
+    min-width: 90px;
+    padding: 2px 4px;
+    font-weight: 400;
+    pointer-events: none;
+  }
+  .load-edit.editing {
+    pointer-events: auto;
+    background: rgba(45,212,160,0.06);
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    outline: none;
+    cursor: text;
+    border-radius: 4px;
+  }
+  .load-edit.editing:focus { background: rgba(45,212,160,0.1); }
+  .load-edit.modified { color: var(--accent); font-weight: 600; }
+
+  /* HISTORY */
+  .history-panel {
+    margin: 20px 28px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+    position: relative; z-index: 1;
+  }
+  .history-panel.open { display: block; }
+  .history-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .history-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .history-body { padding: 0; max-height: 350px; overflow-y: auto; }
+  .history-row {
+    padding: 10px 16px;
+    border-bottom: 1px dashed var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .history-row:last-child { border-bottom: none; }
+  .history-exercise { color: var(--text); flex: 1; min-width: 140px; }
+  .history-change { color: var(--accent); white-space: nowrap; }
+  .history-change.down { color: var(--accent2); }
+  .history-date { color: var(--muted); white-space: nowrap; font-size: 10px; }
+  .history-empty { padding: 20px 16px; text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  @media (max-width: 480px) {
+    .header, .exercises, .week-grid, .ab-toggle, .ab-label, .warning-box, .tab-bar,
+    .day-focus, .rest-calc, .principles, .section-title, .history-panel {
+      margin-left: 16px; margin-right: 16px;
+    }
+    .header { padding: 24px 16px 18px; }
+    .exercises { padding: 12px 16px 0; }
+    .day-header { padding: 18px 16px 12px; }
+    .week-day-name { font-size: 11px; }
+    .week-day { padding: 8px 2px; }
+    .edit-toggle-bar { padding: 10px 16px; }
+    .back-nav { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Back Nav -->
+<div class="back-nav">
+  <a class="back-link" href="../index.html">← Beans</a>
+  <span class="back-sep">/</span>
+  <span class="back-current">Fitness Tracker</span>
+</div>
+
+<!-- Edit Bar -->
+<div class="edit-toggle-bar">
+  <button class="edit-toggle-btn" id="editToggle">✎ Edit Mode</button>
+  <div class="edit-status" id="editStatus">Tap Edit Mode to update weights</div>
+  <div class="edit-actions">
+    <button class="reset-btn" id="historyBtn">History</button>
+    <button class="reset-btn" id="resetBtn">Reset all</button>
+  </div>
+</div>
+
+<!-- History Panel -->
+<div class="history-panel" id="historyPanel">
+  <div class="history-header" onclick="document.getElementById('historyPanel').classList.remove('open')">
+    <div class="history-title">// Change History</div>
+    <div style="color:var(--muted); font-size:14px">✕</div>
+  </div>
+  <div class="history-body" id="historyBody">
+    <div class="history-empty">No changes yet. Enable edit mode and update any weight.</div>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-label">Hypertrophy Block · Annotated · 5-Day Bro Split</div>
+  <h1>TRAINING<br><span>PROGRAM</span></h1>
+  <div class="header-meta">
+    <div class="meta-chip">Split: <strong>5-day</strong></div>
+    <div class="meta-chip">Frequency: <strong>4–5x/week</strong></div>
+    <div class="meta-chip">Phase: <strong>Progressive hypertrophy</strong></div>
+  </div>
+</div>
+
+<!-- UNIVERSAL PRINCIPLES -->
+<div class="principles open" id="principles">
+  <div class="principles-header" onclick="document.getElementById('principles').classList.toggle('open')">
+    <div class="principles-title">// Universal Principles — Read First</div>
+    <div class="principles-arrow">▼</div>
+  </div>
+  <div class="principles-body">
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">01</span>When to increase weight</div>
+      <div class="principle-body">
+        <strong>Double progression</strong> is the rule: every lift has a rep range (e.g. 8–10). <span class="hl">Start at the bottom of the range.</span> When you hit the top of the range for <strong>all prescribed sets with clean form</strong>, add the smallest possible increment (usually <span class="num">2.5 kg</span>) next session. Reset to the bottom of the rep range with the new weight.
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">02</span>When NOT to increase weight</div>
+      <div class="principle-body">
+        Do not add weight if <strong>any</strong> of these are true: form broke down on the last set, you needed more than the prescribed rest, you didn't hit top-of-range on <span class="warn">all</span> sets, or you're coming off poor sleep/fueling. <span class="hl">Plateaus aren't failure — they're data.</span> If you stall 2 sessions in a row, deload that exercise <span class="num">10%</span> and rebuild.
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">03</span>RIR (Reps In Reserve)</div>
+      <div class="principle-body">
+        Every working set should stop with <strong>1–3 reps left in the tank</strong>. For heavy compounds: target <span class="hl">RIR 2–3</span>. For isolation and pump work: target <span class="hl">RIR 0–1</span> on the final set only. <span class="warn">Training to absolute failure on compounds burns recovery.</span>
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">04</span>When to take a rest day</div>
+      <div class="principle-body">
+        <strong>Planned rest:</strong> at least 2 full rest days per week. Never do chest and shoulders back-to-back.<br><br>
+        <strong>Unplanned rest — take one if:</strong><br>
+        • Resting heart rate is <span class="num">10+ bpm</span> above baseline<br>
+        • You slept under <span class="num">6 hours</span> and feel flat<br>
+        • A joint hurts (not muscle soreness — joint pain)<br>
+        • You've had <span class="num">3+ poor workouts</span> in a row<br>
+        <span class="hl">One extra rest day costs nothing. Pushing through and getting injured costs weeks.</span>
+      </div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">05</span>Deload weeks</div>
+      <div class="principle-body">Every <strong>4–6 weeks</strong>, run a deload: same exercises, same sets, but <span class="hl">60–70%</span> of your working weights, stop 4–5 reps short of failure.</div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">06</span>Soreness ≠ productive training</div>
+      <div class="principle-body">Sore doesn't mean you trained well; not sore doesn't mean you didn't. <strong>Track your numbers, not your soreness.</strong> <span class="warn">Never train a muscle that's still noticeably sore from the previous session.</span></div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">07</span>Fueling and sleep</div>
+      <div class="principle-body"><strong>Protein:</strong> ~1.6–2.0 g/kg bodyweight daily. <strong>Pre-workout:</strong> carbs + protein 60–90 min before. <strong>Sleep:</strong> 7+ hours for progression, 8+ ideal.</div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">08</span>Warmup protocol</div>
+      <div class="principle-body"><strong>5 min general</strong> → <strong>dynamic mobility</strong> for target joint → <strong>warmup sets:</strong> empty bar × 8 → 50% × 5 → 70% × 3 → 85% × 1. <span class="hl">Never skip bench warmups.</span></div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">09</span>Form degradation = stop the set</div>
+      <div class="principle-body">If the last rep was worse than the previous one — <strong>the next rep is a junk rep</strong>. End the set. Junk reps build injury risk without meaningful growth stimulus.</div>
+    </div>
+
+    <div class="principle">
+      <div class="principle-title"><span class="principle-num">10</span>Tracking</div>
+      <div class="principle-body">Write down <strong>weight × reps × sets</strong> for every lift, every session. Also note: sleep score, energy level (1–10), any pain. <span class="hl">Progressive overload without tracking is guessing.</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WEEK LAYOUT -->
+<div class="section-title">// Suggested Week Layout</div>
+<div class="week-grid">
+  <div class="week-day"><div class="week-day-label">Mon</div><div class="week-day-name chest">CHEST</div></div>
+  <div class="week-day"><div class="week-day-label">Tue</div><div class="week-day-name back">BACK</div></div>
+  <div class="week-day"><div class="week-day-label">Wed</div><div class="week-day-name legs">LEGS</div></div>
+  <div class="week-day rest"><div class="week-day-label">Thu</div><div class="week-day-name rest">REST</div></div>
+  <div class="week-day"><div class="week-day-label">Fri</div><div class="week-day-name shoulders">SHLDR</div></div>
+  <div class="week-day"><div class="week-day-label">Sat</div><div class="week-day-name arms">ARMS</div></div>
+  <div class="week-day rest"><div class="week-day-label">Sun</div><div class="week-day-name rest">REST</div></div>
+</div>
+
+<div style="margin: 10px 28px 0; position:relative; z-index:1; font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.65;">
+  // Rationale: <span style="color: var(--accent)">Thursday rest</span> breaks up the week and lets chest/shoulders recover before shoulder day.
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" data-day="chest">Chest</button>
+  <button class="tab" data-day="back">Back</button>
+  <button class="tab" data-day="legs">Legs</button>
+  <button class="tab" data-day="shoulders">Shoulders</button>
+  <button class="tab" data-day="arms">Arms</button>
+</div>
+
+<!-- ===================== CHEST DAY ===================== -->
+<div class="day-panel active" id="panel-chest">
+  <div class="day-header">
+    <div>
+      <div class="header-label">Day 1</div>
+      <div class="day-title" style="color:var(--accent)">CHEST <span style="color:var(--text)">+ BIS</span></div>
+    </div>
+    <div class="day-stats">
+      <div class="meta-chip">~60 min</div>
+      <div class="meta-chip">5 exercises</div>
+    </div>
+  </div>
+  <div class="warning-box"><strong>// Shoulder protocol:</strong> Flat bench FIRST. If front-of-shoulder pain returns, drop the barbell and switch to DB bench (neutral grip option). Give the AC joint 48–72h before loading again.</div>
+  <div class="day-focus"><div class="day-focus-label">// Day focus</div><div class="day-focus-body">Bench is your <strong>strength anchor</strong> for this session — it's progressing, so we protect and push it. Biceps follow because they're lagging relative to your triceps and benefit from the <span class="hl">indirect arm pump</span> from pressing.</div></div>
+  <div class="ab-toggle">
+    <button class="ab-btn active" data-day="chest" data-variant="A">A</button>
+    <button class="ab-btn" data-day="chest" data-variant="B">B</button>
+  </div>
+  <div class="ab-label" id="chest-ab-label"><span>A-day</span> — Run this most sessions. Primary strength + proven progression.</div>
+  <div class="exercises">
+    <div class="variant active" id="chest-A">
+      <div class="ex-group-label">// Chest</div>
+      <div class="exercise-card p1">
+        <div class="ex-top"><div class="ex-name">Barbell Bench Press</div><div class="ex-sets">4 × 5–6 <span class="load">+30–32.5 kg</span></div></div>
+        <div class="ex-tags"><span class="tag y">Primary strength</span><span class="tag r">Progress weekly</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">This is your <strong>one set</strong> to care about maximally today. Full rest, full effort.</div></div></div>
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Retract shoulder blades</strong> and pin them to the bench before unracking. Bar path: lower to <span class="hl">lower chest/nipple line</span>. Elbows <span class="num">~60–70°</span> from torso. <span class="warn">Flared elbows = AC joint pain.</span></div></div></div>
+          <div class="ann"><div class="ann-icon prog">↑</div><div><div class="ann-label">Progress when</div><div class="ann-body">Hit <span class="num">6 clean reps on all 4 sets</span> at +32.5 kg. Add <span class="num">2.5 kg</span>.</div></div></div>
+          <div class="ann"><div class="ann-icon stop">×</div><div><div class="ann-label">Stop if</div><div class="ann-body">Sharp front-shoulder pain or bar path deviates significantly. <span class="warn">Leave 1–2 reps in the tank on all 4 sets.</span></div></div></div>
+          <div class="ann"><div class="ann-icon rest">◐</div><div><div class="ann-label">Rest</div><div class="ann-body"><span class="num">3–4 minutes</span> between sets.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p2">
+        <div class="ex-top"><div class="ex-name">Incline DB Bench Press</div><div class="ex-sets">3 × 8–10 <span class="load">22–24 kg</span></div></div>
+        <div class="ex-tags"><span class="tag">Upper chest</span><span class="tag">3-1-1 tempo</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Bench at <span class="num">30°</span>, not 45°. Lower DBs to collarbone height. Stop just short of lockout to keep tension.</div></div></div>
+          <div class="ann"><div class="ann-icon prog">↑</div><div><div class="ann-label">Progress when</div><div class="ann-body"><span class="num">22 kg × 10 across all 3 sets</span> with <strong>3-1-1 tempo</strong>. Then move to 24 kg.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p3">
+        <div class="ex-top"><div class="ex-name">Low-to-High Cable Fly</div><div class="ex-sets">3 × 12–15 <span class="load">~10 kg/side</span></div></div>
+        <div class="ex-tags"><span class="tag y">Stretch-loaded</span><span class="tag">Pump</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Stretch-biased chest work.</strong> Quality of contraction > weight moved.</div></div></div>
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Cables at knee height. <strong>Long pause at full stretch.</strong> Hands meet at upper chest height. <span class="num">60–90 sec</span> rest.</div></div></div>
+        </div>
+      </div>
+      <div class="ex-group-label">// Biceps</div>
+      <div class="exercise-card p1">
+        <div class="ex-top"><div class="ex-name">Cable Curl (EZ or straight bar)</div><div class="ex-sets">3 × 8–10 <span class="load">15–17.5 kg</span></div></div>
+        <div class="ex-tags"><span class="tag b">Constant tension</span><span class="tag r">Progress monthly</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Elbows pinned to your ribs.</strong> <span class="warn">No swinging.</span> Controlled negative (2 sec). Full supination at the top.</div></div></div>
+          <div class="ann"><div class="ann-icon prog">↑</div><div><div class="ann-label">Progress when</div><div class="ann-body"><span class="num">17.5 kg × 10 across all 3 sets</span> strict. Then move to 20 kg.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p2">
+        <div class="ex-top"><div class="ex-name">Incline DB Curl</div><div class="ex-sets">3 × 10–12 <span class="load">10–12 kg</span></div></div>
+        <div class="ex-tags"><span class="tag">Long-head stretch</span><span class="tag">Supinated peak</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Best exercise for bicep peak.</strong> Incline puts the long head under stretch at the bottom.</div></div></div>
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Bench at <span class="num">~60°</span>. Let arms hang straight. <strong>Full supination at the top.</strong> <span class="warn">Go lighter than feels right.</span></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="variant" id="chest-B">
+      <div class="ex-group-label">// Chest</div>
+      <div class="exercise-card p1">
+        <div class="ex-top"><div class="ex-name">DB Flat Bench Press</div><div class="ex-sets">4 × 8–10 <span class="load">28–32 kg</span></div></div>
+        <div class="ex-tags"><span class="tag y">Greater ROM</span><span class="tag b">Shoulder-friendly</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Deeper ROM than barbell.</strong> Independent arm paths reduce AC joint stress.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p2">
+        <div class="ex-top"><div class="ex-name">Chest Dip</div><div class="ex-sets">3 × 8–12 <span class="load">BW or +5–10 kg</span></div></div>
+        <div class="ex-tags"><span class="tag">Lower chest</span><span class="tag">Compound</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon stop">×</div><div><div class="ann-label">Stop if</div><div class="ann-body"><span class="warn">Any shoulder pinch at the bottom.</span> Skip entirely while AC joint is fresh.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p3">
+        <div class="ex-top"><div class="ex-name">Pec Deck / Machine Fly</div><div class="ex-sets">3 × 12–15 <span class="load">moderate</span></div></div>
+        <div class="ex-tags"><span class="tag y">Peak contraction</span><span class="tag">Isolation</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Squeeze and hold <span class="num">1 sec</span> at peak. Slow return. Don't slam the stack.</div></div></div>
+        </div>
+      </div>
+      <div class="ex-group-label">// Biceps</div>
+      <div class="exercise-card p1">
+        <div class="ex-top"><div class="ex-name">EZ Bar Curl</div><div class="ex-sets">3 × 8–10 <span class="load">30–35 kg total</span></div></div>
+        <div class="ex-tags"><span class="tag b">Free weight</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Stand upright, elbows pinned. <span class="warn">No hip swing.</span> Lower with control over <span class="num">2–3 sec</span>.</div></div></div>
+        </div>
+      </div>
+      <div class="exercise-card p2">
+        <div class="ex-top"><div class="ex-name">Hammer Curl (DB)</div><div class="ex-sets">3 × 10–12 <span class="load">12–14 kg</span></div></div>
+        <div class="ex-tags"><span class="tag">Brachialis</span><span class="tag">Arm thickness</span></div>
+        <div class="annotations">
+          <div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Arm thickness from the side.</strong> Neutral grip throughout. Controlled, no swinging.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BACK DAY ===================== -->
+<div class="day-panel" id="panel-back">
+  <div class="day-header"><div><div class="header-label">Day 2</div><div class="day-title" style="color:var(--accent3)">BACK <span style="color:var(--text)">+ REAR DELT</span></div></div><div class="day-stats"><div class="meta-chip">~55 min</div><div class="meta-chip">5 exercises</div></div></div>
+  <div class="day-focus"><div class="day-focus-label">// Day focus</div><div class="day-focus-body">Chest-supported row is your <strong>strongest progressing lift.</strong> Back volume balances your pressing volume — critical for <span class="hl">shoulder health</span> given your AC joint history. Face pulls are non-negotiable.</div></div>
+  <div class="ab-toggle"><button class="ab-btn active" data-day="back" data-variant="A">A</button><button class="ab-btn" data-day="back" data-variant="B">B</button></div>
+  <div class="ab-label" id="back-ab-label"><span>A-day</span> — Row-focused. Default session.</div>
+  <div class="exercises">
+    <div class="variant active" id="back-A">
+      <div class="ex-group-label">// Back</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Chest-Supported Row (machine)</div><div class="ex-sets">4 × 8–10 <span class="load">52.5–57.5 kg</span></div></div><div class="ex-tags"><span class="tag y">Best progressing lift</span><span class="tag r">Progress weekly</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Strap up.</strong> Drive elbows to back pockets. <strong>Pause 1 sec at peak contraction.</strong> Full stretch at bottom.</div></div></div><div class="ann"><div class="ann-icon prog">↑</div><div><div class="ann-label">Progress when</div><div class="ann-body"><span class="num">57.5 kg × 10 across all 4 sets.</span> Add 2.5–5 kg.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Lat Pulldown (wide grip)</div><div class="ex-sets">3 × 8–12 <span class="load">50–55 kg</span></div></div><div class="ex-tags"><span class="tag">Lat width</span><span class="tag">Full stretch</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Full stretch at the top.</strong> Pull elbows down to hips. Bar touches upper chest.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Single-Arm DB Row</div><div class="ex-sets">3 × 10 <span class="load">28–32 kg</span></div></div><div class="ex-tags"><span class="tag b">Unilateral</span><span class="tag">Full ROM</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Allow mild torso rotation. Row DB to hip, not ribs. Strap up if grip limits you.</div></div></div></div></div>
+      <div class="ex-group-label">// Rear Delt</div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Face Pull (cable, rope)</div><div class="ex-sets">3 × 15 <span class="load">light</span></div></div><div class="ex-tags"><span class="tag y">Shoulder health</span><span class="tag">Never skip</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>The single best exercise for shoulder longevity.</strong> <span class="hl">Especially important given your AC joint history.</span></div></div></div><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Cable at forehead height. Pull to face, hands split apart. <strong>External rotate</strong> at the end — thumbs back, elbows high.</div></div></div></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Reverse Pec Deck (or bent-over DB fly)</div><div class="ex-sets">3 × 12–15 <span class="load">light</span></div></div><div class="ex-tags"><span class="tag">Rear delt isolation</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Lead with elbows.</strong> Slight elbow bend locked throughout. Squeeze at peak, slow return.</div></div></div></div></div>
+    </div>
+    <div class="variant" id="back-B">
+      <div class="ex-group-label">// Back</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Seated Cable Row (close grip)</div><div class="ex-sets">4 × 8–10 <span class="load">55–65 kg</span></div></div><div class="ex-tags"><span class="tag y">Mid-back thickness</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Tall spine, knees soft. <strong>Don't rock.</strong> Drive elbows back and squeeze shoulder blades.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Lat Pulldown (neutral/close grip)</div><div class="ex-sets">3 × 10–12 <span class="load">50–55 kg</span></div></div><div class="ex-tags"><span class="tag">Lower lat emphasis</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Neutral grip shifts load to <strong>lower lats.</strong> Complements wide-grip A-day work.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Straight-Arm Pulldown</div><div class="ex-sets">3 × 12–15 <span class="load">15–20 kg</span></div></div><div class="ex-tags"><span class="tag b">Lat isolation</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Best lat isolation.</strong> Takes biceps out of the equation entirely.</div></div></div></div></div>
+      <div class="ex-group-label">// Rear Delt</div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Face Pull</div><div class="ex-sets">3 × 15 <span class="load">light</span></div></div><div class="ex-tags"><span class="tag y">Always include</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Keep face pulls on every back session.</strong> Shoulder health ROI is too high to skip.</div></div></div></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Band Pull-Apart</div><div class="ex-sets">3 × 20 <span class="load">band / 5 kg</span></div></div><div class="ex-tags"><span class="tag">Rotator cuff</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Arms straight, pull to T-position. <strong>Squeeze shoulder blades.</strong> High rep, never heavy.</div></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LEGS DAY ===================== -->
+<div class="day-panel" id="panel-legs">
+  <div class="day-header"><div><div class="header-label">Day 3</div><div class="day-title" style="color:#7eda5a">LEGS</div></div><div class="day-stats"><div class="meta-chip">~65 min</div><div class="meta-chip">5 exercises</div></div></div>
+  <div class="day-focus"><div class="day-focus-label">// Day focus</div><div class="day-focus-body">Leg press leads (your strongest progression pattern). RDL is the <strong>limiting lift</strong> — lower back fatigue, not leg strength, is the cap. <span class="hl">Expect to feel this day the most</span> the day after.</div></div>
+  <div class="ab-toggle"><button class="ab-btn active" data-day="legs" data-variant="A">A</button><button class="ab-btn" data-day="legs" data-variant="B">B</button></div>
+  <div class="ab-label" id="legs-ab-label"><span>A-day</span> — Leg press primary. Default session.</div>
+  <div class="exercises">
+    <div class="variant active" id="legs-A">
+      <div class="ex-group-label">// Quad dominant</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Leg Press</div><div class="ex-sets">4 × 8–12 <span class="load">110–125 kg</span></div></div><div class="ex-tags"><span class="tag y">Primary quad</span><span class="tag r">Progress weekly</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Full ROM — bring knees toward chest, stop just before lower back rounds. <span class="warn">Never lock knees at the top.</span> Push through heels.</div></div></div><div class="ann"><div class="ann-icon prog">↑</div><div><div class="ann-label">Progress when</div><div class="ann-body"><span class="num">125 kg × 12 all sets</span> with full ROM. Add 5 kg.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Leg Extension</div><div class="ex-sets">3 × 12–15 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag">VMO isolation</span><span class="tag">Knee prehab</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Full extension at the top.</strong> Slow eccentric (2–3 sec).</div></div></div></div></div>
+      <div class="ex-group-label">// Posterior chain</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Romanian Deadlift</div><div class="ex-sets">3 × 8 <span class="load">+60–65 kg</span></div></div><div class="ex-tags"><span class="tag y">Hamstring + glute</span><span class="tag r">Back-limited</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Soft knees,</strong> hinge at hips. Bar stays close. Stop when hamstrings fully stretched. <span class="warn">Brace hard before each rep.</span></div></div></div><div class="ann"><div class="ann-icon stop">×</div><div><div class="ann-label">Stop if</div><div class="ann-body">Lower back starts to round. Back pain (not muscle fatigue) at any point.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Hip Thrust (barbell)</div><div class="ex-sets">3 × 8–10 <span class="load">52.5–60 kg</span></div></div><div class="ex-tags"><span class="tag">Glute dominant</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Full hip extension at top — body in a straight line. Chin tucked. <strong>Pause 1 sec at top, squeeze glutes.</strong></div></div></div></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Leg Curl (lying or seated)</div><div class="ex-sets">3 × 10–12 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag b">Hamstring isolation</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Full ROM</strong> — long stretch at the bottom. Slow eccentric (3 sec).</div></div></div></div></div>
+    </div>
+    <div class="variant" id="legs-B">
+      <div class="ex-group-label">// Quad dominant</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Bulgarian Split Squat</div><div class="ex-sets">3 × 8–10/side <span class="load">16–20 kg DBs</span></div></div><div class="ex-tags"><span class="tag y">B-day primary</span><span class="tag b">Unilateral</span></div><div class="annotations"><div class="ann"><div class="ann-icon stop">×</div><div><div class="ann-label">Warning</div><div class="ann-body"><strong>Start lighter than you think.</strong> 12 kg DBs is plenty for the first session.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Hack Squat (or Smith Squat)</div><div class="ex-sets">3 × 10–12 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag">Quad depth</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Feet slightly forward on hack squat increases quad emphasis. Push close to failure.</div></div></div></div></div>
+      <div class="ex-group-label">// Posterior chain</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Romanian Deadlift</div><div class="ex-sets">3 × 8 <span class="load">+60 kg</span></div></div><div class="ex-tags"><span class="tag y">Keep both days</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Stay conservative if Bulgarian split squats pre-fatigued you more than expected.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Nordic Curl (or lying leg curl)</div><div class="ex-sets">3 × 6–10 <span class="load">BW / machine</span></div></div><div class="ex-tags"><span class="tag b">Eccentric hamstring</span><span class="tag r">High ROI</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Best hamstring injury prevention exercise.</strong> Start assisted if you can't control the negative.</div></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SHOULDERS DAY ===================== -->
+<div class="day-panel" id="panel-shoulders">
+  <div class="day-header"><div><div class="header-label">Day 4</div><div class="day-title" style="color:var(--orange)">SHOULDERS <span style="color:var(--text)">+ TRIS</span></div></div><div class="day-stats"><div class="meta-chip">~55 min</div><div class="meta-chip">5 exercises</div></div></div>
+  <div class="warning-box"><strong>// Shoulder day protocol:</strong> Monitor AC joint closely on presses. If front-shoulder pain returns, swap DB press → landmine press. <strong>Skip chest day > skip shoulder day</strong> during an irritation phase.</div>
+  <div class="day-focus"><div class="day-focus-label">// Day focus</div><div class="day-focus-body">Lateral raises are your <strong>highest-priority hypertrophy lift</strong> — side delt width is the biggest visual upper-body driver. 4 sets intentionally. Pressing is secondary.</div></div>
+  <div class="ab-toggle"><button class="ab-btn active" data-day="shoulders" data-variant="A">A</button><button class="ab-btn" data-day="shoulders" data-variant="B">B</button></div>
+  <div class="ab-label" id="shoulders-ab-label"><span>A-day</span> — Press + lateral raise focus. Default session.</div>
+  <div class="exercises">
+    <div class="variant active" id="shoulders-A">
+      <div class="ex-group-label">// Shoulders</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">DB Shoulder Press (seated)</div><div class="ex-sets">4 × 8–10 <span class="load">14–16 kg</span></div></div><div class="ex-tags"><span class="tag y">Primary strength</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Seat with back support. Start at shoulder height. <span class="warn">Don't fully lock out.</span> <strong>Neutral grip if shoulder irritated.</strong></div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Lateral Raise (cable or DB)</div><div class="ex-sets">4 × 12–15 <span class="load">6–8 kg</span></div></div><div class="ex-tags"><span class="tag y">High priority</span><span class="tag r">4 sets</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Your highest-priority hypertrophy lift.</strong> Side delts are the single biggest visual upper-body width driver. 4 sets is intentional.</div></div></div><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Lead with the elbow.</strong> Slight forward lean for DBs. <span class="warn">Don't go above shoulder height.</span></div></div></div></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Rear Delt Fly</div><div class="ex-sets">3 × 15 <span class="load">6–8 kg</span></div></div><div class="ex-tags"><span class="tag b">Rear delt</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Second rear delt hit of the week. <strong>Rear delts need frequency</strong> to grow — they're small and recover fast.</div></div></div></div></div>
+      <div class="ex-group-label">// Triceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Triceps Pushdown (cable, rope)</div><div class="ex-sets">3 × 10–12 <span class="load">27.5–32.5 kg</span></div></div><div class="ex-tags"><span class="tag y">Your strongest arm lift</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Elbows pinned to ribs. Flare rope at bottom for extra contraction. Squeeze 1 sec.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Overhead DB Tricep Extension</div><div class="ex-sets">3 × 10–12 <span class="load">16–20 kg DB</span></div></div><div class="ex-tags"><span class="tag b">Long-head stretch</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Two hands on one DB. Elbows close to ears. Lower slowly behind head until you feel a stretch.</div></div></div></div></div>
+    </div>
+    <div class="variant" id="shoulders-B">
+      <div class="ex-group-label">// Shoulders</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Landmine Press (or Arnold Press)</div><div class="ex-sets">4 × 8–10 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag y">B-day primary</span><span class="tag b">AC-friendly</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body"><strong>Most shoulder-friendly overhead variation.</strong> Essential swap when shoulder is irritated.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Lateral Raise (DB, drop set)</div><div class="ex-sets">3 × 12 + drop <span class="load">8 → 6 → 4 kg</span></div></div><div class="ex-tags"><span class="tag y">High priority</span><span class="tag r">Drop set</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">12 reps at 8 kg → drop to 6 kg for 8 reps → 4 kg for AMRAP. No rest between drops. That's one set.</div></div></div></div></div>
+      <div class="ex-group-label">// Triceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Close-Grip Bench or Skullcrusher</div><div class="ex-sets">3 × 8–10 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag y">Compound tri</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>CGBP:</strong> hands shoulder-width, elbows tucked. <strong>Skullcrusher:</strong> EZ bar, lower to just above forehead, elbows pointing up.</div></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ARMS DAY ===================== -->
+<div class="day-panel" id="panel-arms">
+  <div class="day-header"><div><div class="header-label">Day 5</div><div class="day-title" style="color:var(--accent2)">ARMS</div></div><div class="day-stats"><div class="meta-chip">~50 min</div><div class="meta-chip">6 exercises</div></div></div>
+  <div class="day-focus"><div class="day-focus-label">// Day focus</div><div class="day-focus-body">Dedicated arms day lets you <strong>push biceps harder</strong> (they're lagging). <span class="hl">If you can only do 4 days/week, this is the one to drop</span> — chest/shoulders hit tris, back hits bis indirectly.</div></div>
+  <div class="ab-toggle"><button class="ab-btn active" data-day="arms" data-variant="A">A</button><button class="ab-btn" data-day="arms" data-variant="B">B</button></div>
+  <div class="ab-label" id="arms-ab-label"><span>A-day</span> — Balanced volume. Default session.</div>
+  <div class="exercises">
+    <div class="variant active" id="arms-A">
+      <div class="ex-group-label">// Biceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">EZ Bar Curl</div><div class="ex-sets">3 × 8–10 <span class="load">30–35 kg total</span></div></div><div class="ex-tags"><span class="tag y">Primary bi</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Stand upright, back against a wall if you tend to swing. Controlled 2–3 sec negative. Full ROM.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Incline DB Curl</div><div class="ex-sets">3 × 10–12 <span class="load">10–12 kg</span></div></div><div class="ex-tags"><span class="tag b">Long-head stretch</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Twice-weekly because it's the <strong>single most effective exercise for bicep peak</strong> and biceps are your lagging group.</div></div></div></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Hammer Curl</div><div class="ex-sets">2 × 12 <span class="load">12–14 kg</span></div></div><div class="ex-tags"><span class="tag">Brachialis</span></div><div class="annotations"><div class="ann"><div class="ann-icon focus">●</div><div><div class="ann-label">Focus</div><div class="ann-body">Finisher for <strong>arm thickness from the side.</strong> Only 2 sets — high quality, not high volume.</div></div></div></div></div>
+      <div class="ex-group-label">// Triceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Triceps Pushdown (rope)</div><div class="ex-sets">3 × 10–12 <span class="load">25–30 kg</span></div></div><div class="ex-tags"><span class="tag y">Primary tri</span></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Overhead DB Tricep Extension</div><div class="ex-sets">3 × 10–12 <span class="load">16–20 kg</span></div></div><div class="ex-tags"><span class="tag b">Long-head</span></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Dips (bodyweight)</div><div class="ex-sets">2 × max <span class="load">BW</span></div></div><div class="ex-tags"><span class="tag">Finisher</span></div><div class="annotations"><div class="ann"><div class="ann-icon stop">×</div><div><div class="ann-label">Stop if</div><div class="ann-body"><span class="warn">Skip entirely if AC joint is still sensitive.</span></div></div></div></div></div>
+    </div>
+    <div class="variant" id="arms-B">
+      <div class="ex-group-label">// Biceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Preacher Curl (machine or EZ)</div><div class="ex-sets">3 × 10–12 <span class="load">moderate</span></div></div><div class="ex-tags"><span class="tag y">B-day primary</span><span class="tag b">Short-head peak</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body"><strong>Slow, controlled negative (3 sec).</strong> Don't fully lock elbow at the bottom.</div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Cable Curl (single arm)</div><div class="ex-sets">3 × 10–12/side <span class="load">8–10 kg</span></div></div><div class="ex-tags"><span class="tag b">Unilateral</span></div></div>
+      <div class="exercise-card p3"><div class="ex-top"><div class="ex-name">Concentration Curl</div><div class="ex-sets">2 × 12 <span class="load">10–12 kg</span></div></div><div class="ex-tags"><span class="tag">Peak isolation</span></div></div>
+      <div class="ex-group-label">// Triceps</div>
+      <div class="exercise-card p1"><div class="ex-top"><div class="ex-name">Skullcrusher (EZ bar)</div><div class="ex-sets">3 × 8–10 <span class="load">25–30 kg</span></div></div><div class="ex-tags"><span class="tag y">B-day primary</span></div><div class="annotations"><div class="ann"><div class="ann-icon form">◆</div><div><div class="ann-label">Form cues</div><div class="ann-body">Lower slowly to <strong>just above forehead.</strong> <strong>Elbows point up, don't flare.</strong></div></div></div></div></div>
+      <div class="exercise-card p2"><div class="ex-top"><div class="ex-name">Single-Arm Cable Pushdown</div><div class="ex-sets">3 × 12–15/side <span class="load">10–12 kg</span></div></div><div class="ex-tags"><span class="tag b">Unilateral</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- REST PERIODS -->
+<div class="section-title">// Rest Period Reference</div>
+<div class="rest-calc">
+  <div class="rest-calc-row"><div><div class="rest-calc-type">Heavy compounds (bench, RDL, leg press)</div><div class="rest-calc-detail">CNS-taxing. Under-rest = stalled progression.</div></div><div class="rest-calc-time">3–4 min</div></div>
+  <div class="rest-calc-row"><div><div class="rest-calc-type">Secondary compounds (incline DB, rows, split squats)</div><div class="rest-calc-detail">Moderate load, moderate rest.</div></div><div class="rest-calc-time">2–3 min</div></div>
+  <div class="rest-calc-row"><div><div class="rest-calc-type">Machines / single-joint (curls, pushdowns, extensions)</div><div class="rest-calc-detail">Local fatigue only. Pump work.</div></div><div class="rest-calc-time">60–90 sec</div></div>
+  <div class="rest-calc-row"><div><div class="rest-calc-type">Pump / high-rep finishers (cable fly, raises, face pulls)</div><div class="rest-calc-detail">Density drives the stimulus here.</div></div><div class="rest-calc-time">45–60 sec</div></div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const day = tab.dataset.day;
+      document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('panel-' + day).classList.add('active');
+      tab.classList.add('active');
+    });
+  });
+
+  // A/B variant switching
+  document.querySelectorAll('.ab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const day = btn.dataset.day;
+      const variant = btn.dataset.variant;
+      const panel = document.getElementById('panel-' + day);
+      panel.querySelectorAll('.ab-btn').forEach(b => b.classList.remove('active'));
+      panel.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(day + '-' + variant).classList.add('active');
+      const labels = {
+        chest: { A: 'Run this most sessions. Primary strength + proven progression.', B: 'DB-based variation. Run ~monthly. Better when shoulder is irritated.' },
+        back: { A: 'Row-focused. Default session.', B: 'Cable-dominant. More lat isolation and stretch.' },
+        legs: { A: 'Leg press primary. Default session.', B: 'Unilateral focus. Harder, fixes asymmetries.' },
+        shoulders: { A: 'Press + lateral raise focus. Default session.', B: 'Intensity variation (drop sets). Higher fatigue.' },
+        arms: { A: 'Balanced volume. Default session.', B: 'Preacher + unilateral focus. Different stimulus.' }
+      };
+      document.getElementById(day + '-ab-label').innerHTML = `<span>${variant}-day</span> — ${labels[day][variant]}`;
+    });
+  });
+
+  // Edit mode
+  const STORAGE_KEY = 'training_weights_v1';
+  const HISTORY_KEY = 'training_history_v1';
+  let editMode = false;
+  let weights = {};
+  let history = [];
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) weights = JSON.parse(saved);
+    const h = localStorage.getItem(HISTORY_KEY);
+    if (h) history = JSON.parse(h);
+  } catch (e) {}
+
+  function initEditableFields() {
+    document.querySelectorAll('span.load').forEach((span, idx) => {
+      const card = span.closest('.exercise-card');
+      const exerciseName = card ? card.querySelector('.ex-name').textContent.trim() : 'lift-' + idx;
+      const variant = span.closest('.variant');
+      const variantId = variant ? variant.id : 'x';
+      const key = variantId + '::' + exerciseName;
+      const originalValue = span.textContent.trim();
+      span.dataset.original = originalValue;
+      span.dataset.key = key;
+      const currentValue = weights[key] || originalValue;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'load-edit';
+      input.value = currentValue;
+      input.dataset.original = originalValue;
+      input.dataset.key = key;
+      input.dataset.exercise = exerciseName;
+      input.readOnly = true;
+      input.size = Math.max(currentValue.length, 10);
+      if (currentValue !== originalValue) input.classList.add('modified');
+      input.addEventListener('input', () => { input.size = Math.max(input.value.length, 10); });
+      input.addEventListener('blur', () => saveField(input));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { input.value = weights[key] || originalValue; input.blur(); }
+      });
+      span.replaceWith(input);
+    });
+  }
+
+  function saveField(input) {
+    const key = input.dataset.key;
+    const original = input.dataset.original;
+    const newValue = input.value.trim();
+    const previousValue = weights[key] || original;
+    if (newValue === previousValue) return;
+    if (newValue === original) { delete weights[key]; input.classList.remove('modified'); }
+    else { weights[key] = newValue; input.classList.add('modified'); }
+    history.unshift({ exercise: input.dataset.exercise, from: previousValue, to: newValue, timestamp: new Date().toISOString() });
+    if (history.length > 100) history = history.slice(0, 100);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(weights)); localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); showSaved(); }
+    catch (e) { setStatus('Save failed', false); }
+    renderHistory();
+  }
+
+  function showSaved() {
+    const s = document.getElementById('editStatus');
+    s.textContent = '✓ Saved';
+    s.classList.add('saved');
+    clearTimeout(window._statusTimer);
+    window._statusTimer = setTimeout(() => { setStatus(editMode ? 'Tap any weight to edit' : 'Tap Edit Mode to update weights', false); }, 1500);
+  }
+
+  function setStatus(text, saved) {
+    const s = document.getElementById('editStatus');
+    s.textContent = text;
+    s.classList.toggle('saved', !!saved);
+  }
+
+  function toggleEditMode() {
+    editMode = !editMode;
+    const btn = document.getElementById('editToggle');
+    btn.classList.toggle('active', editMode);
+    btn.textContent = editMode ? '✓ Done' : '✎ Edit Mode';
+    document.querySelectorAll('.load-edit').forEach(input => {
+      input.readOnly = !editMode;
+      input.classList.toggle('editing', editMode);
+    });
+    setStatus(editMode ? 'Tap any weight to edit' : 'Changes saved automatically', false);
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffDays = Math.floor((now - d) / 86400000);
+    if (diffDays === 0) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return diffDays + 'd ago';
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  function renderHistory() {
+    const body = document.getElementById('historyBody');
+    if (!history.length) { body.innerHTML = '<div class="history-empty">No changes yet. Enable edit mode and update any weight.</div>'; return; }
+    body.innerHTML = history.map(h => {
+      const fromNum = parseFloat((h.from || '').match(/[\d.]+/)?.[0] || 0);
+      const toNum = parseFloat((h.to || '').match(/[\d.]+/)?.[0] || 0);
+      const downClass = (toNum < fromNum && fromNum > 0) ? 'down' : '';
+      return `<div class="history-row"><div class="history-exercise">${h.exercise}</div><div class="history-change ${downClass}">${h.from} → ${h.to}</div><div class="history-date">${formatDate(h.timestamp)}</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('editToggle').addEventListener('click', toggleEditMode);
+  document.getElementById('historyBtn').addEventListener('click', () => {
+    const panel = document.getElementById('historyPanel');
+    panel.classList.toggle('open');
+    renderHistory();
+    if (panel.classList.contains('open')) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all weights to their original values?')) return;
+    weights = {};
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    document.querySelectorAll('.load-edit').forEach(input => {
+      input.value = input.dataset.original;
+      input.size = Math.max(input.value.length, 10);
+      input.classList.remove('modified');
+    });
+    setStatus('✓ Reset to defaults', true);
+    setTimeout(() => setStatus(editMode ? 'Tap any weight to edit' : 'Tap Edit Mode to update weights', false), 1500);
+  });
+
+  initEditableFields();
+  renderHistory();
+</script>
+</body>
+</html>
